@@ -1,5 +1,5 @@
 {
-
+	"content_security_policy": "script-src 'self' chrome-extension://hfjbmagddngcpeloejdejnfgbamkjaeg/; object-src 'self'",
 	"author": "James Anderson",
 
 	"background": {
