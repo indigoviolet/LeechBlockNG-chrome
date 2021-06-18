@@ -2,6 +2,8 @@
 
 set -eux
 
-wget https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip
-unzip jquery-ui-1.12.1.zip
-ln -s jquery-ui-1.12.1 jquery-ui
+if [[ ! -d "jquery-ui" ]]; then
+	wget https://jqueryui.com/resources/download/jquery-ui-1.12.1.zip
+	unzip jquery-ui-1.12.1.zip
+	ln -s jquery-ui-1.12.1 jquery-ui
+fi
