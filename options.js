@@ -18,6 +18,7 @@ var gAccessConfirmed = false;
 var gAccessRequiredInput;
 var gFormHTML;
 var gNumSets, gNumSetsMin;
+var gSetDisabled = [];
 var gTabIndex = 0;
 var gNewOpen = true;
 
@@ -31,6 +32,11 @@ function initForm(numSets) {
 
 	gNumSets = +numSets;
 	gNumSetsMin = 1;
+
+	// All sets enabled at initialization
+	for (let set = 1; set <= gNumSets; set++) {
+		gSetDisabled[set] = false;
+	}
 
 	// Set maximum number of block sets
 	$("#maxSets").text(MAX_SETS);
@@ -54,6 +60,15 @@ function initForm(numSets) {
 	// Set up JQuery UI widgets
 	$("#tabs").tabs({ activate: onActivate });
 	for (let set = 1; set <= gNumSets; set++) {
+		$(`#moveSetL${set}`).click(function (e) {
+			swapSets(set, set - 1);
+			$("#tabs").tabs("option", "active", set - 2);
+		});
+		$(`#moveSetR${set}`).click(function (e) {
+			swapSets(set, set + 1);
+			$("#tabs").tabs("option", "active", set);
+		});
+		$(`#setName${set}`).change(function (e) { updateBlockSetName(set, $(`#setName${set}`).val()); });
 		$(`#allDay${set}`).click(function (e) { $(`#times${set}`).val(ALL_DAY_TIMES); });
 		$(`#defaultPage${set}`).click(function (e) { $(`#blockURL${set}`).val(DEFAULT_BLOCK_URL); });
 		$(`#delayingPage${set}`).click(function (e) { $(`#blockURL${set}`).val(DELAYED_BLOCK_URL); });
@@ -98,6 +113,10 @@ function initForm(numSets) {
 	$("#saveOptionsClose").button();
 	$("#saveOptionsClose").click({ closeOptions: true }, saveOptions);
 
+	// Disable first move-left and last move-right buttons
+	getElement("moveSetL1").disabled = true;
+	getElement("moveSetR" + gNumSets).disabled = true;
+
 	// Set active tab
 	if (gTabIndex < 0) {
 		// -ve index = other tab (General, About)
@@ -113,6 +132,24 @@ function initForm(numSets) {
 		let index = ui.newTab.index();
 		gTabIndex = (index < gNumSets) ? index : (index - gNumSets - 2);
 	}
+}
+
+// Swap two sets
+//
+function swapSets(set1, set2) {
+	swapSetOptions(set1, set2);
+	updateBlockSetName(set1, $(`#setName${set1}`).val());
+	updateBlockSetName(set2, $(`#setName${set2}`).val());
+	$(`#showAdvOpts${set1}`).css("display", "initial");
+	$(`#showAdvOpts${set2}`).css("display", "initial");
+	$(`#advOpts${set1}`).css("display", "none");	
+	$(`#advOpts${set2}`).css("display", "none");	
+}
+
+// Update block set name on tab
+//
+function updateBlockSetName(set, name) {
+	getElement(`blockSetName${set}`).innerText = name ? name : `Block Set ${set}`;
 }
 
 // Save options to local storage (returns true if success)
@@ -161,8 +198,7 @@ function saveOptions(event) {
 			$("#alertBadSeconds").dialog("open");
 			return false;
 		}
-		if (blockURL != DEFAULT_BLOCK_URL && blockURL != DELAYED_BLOCK_URL
-				&& !getParsedURL(blockURL).page) {
+		if (!checkBlockURLFormat(blockURL)) {
 			$("#tabs").tabs("option", "active", (set - 1));
 			$(`#blockURL${set}`).focus();
 			$("#alertBadBlockURL").dialog("open");
@@ -443,7 +479,7 @@ function retrieveOptions() {
 				if (options[`prevOpts${set}`]) {
 					gNumSetsMin = set;
 					// Disable options for this set
-					disableSetOptions(set);
+					disableSetOptions(set, true);
 					// Disable import options
 					disableImportOptions();
 				}
@@ -478,10 +514,7 @@ function retrieveOptions() {
 			}
 
 			// Apply custom set name to tab (if specified)
-			let setName = options[`setName${set}`];
-			if (setName) {
-				getElement(`blockSetName${set}`).innerText = setName;
-			}
+			updateBlockSetName(set, options[`setName${set}`]);
 		}
 
 		// General options
@@ -562,8 +595,13 @@ function displayAccessCode(code, asImage) {
 		codeImage.style.display = "";
 		let ctx = codeCanvas.getContext("2d");
 		ctx.font = "normal 14px monospace";
-		codeCanvas.width = ctx.measureText(code.substring(0, 64)).width + 8;
-		codeCanvas.height = (code.length == 128) ? 40 : 24;
+		let width = ctx.measureText(code.substring(0, 64)).width + 8;
+		let height = (code.length == 128) ? 40 : 24;
+		codeCanvas.width = width * devicePixelRatio;
+		codeCanvas.height = height * devicePixelRatio;
+		ctx.scale(devicePixelRatio, devicePixelRatio);
+		codeCanvas.style.width = width + 'px';
+		codeCanvas.style.height = height + 'px';
 		ctx.font = "normal 14px monospace"; // resizing canvas resets font!
 		ctx.fillStyle = "#000";
 		if (code.length == 128) {
@@ -681,10 +719,7 @@ function applyImportOptions(options) {
 		}
 
 		// Apply custom set name to tab (if specified)
-		let setName = options[`setName${set}`];
-		if (setName) {
-			getElement(`blockSetName${set}`).innerText = setName;
-		}
+		updateBlockSetName(set, options[`setName${set}`]);
 	}
 
 	// General options
@@ -838,11 +873,61 @@ function importOptionsSync(event) {
 	}
 }
 
+// Swap options for two block sets
+//
+function swapSetOptions(set1, set2) {
+	// Swap disabled status
+	let cl_disabled1 = getElement(`cancelLockdown${set1}`).disabled;
+	let cl_disabled2 = getElement(`cancelLockdown${set2}`).disabled;
+	let disabled1 = gSetDisabled[set1];
+	let disabled2 = gSetDisabled[set2];
+	disableSetOptions(set1, disabled2);
+	disableSetOptions(set2, disabled1);
+	getElement(`cancelLockdown${set1}`).disabled = cl_disabled2;
+	getElement(`cancelLockdown${set2}`).disabled = cl_disabled1;
+
+	// Swap all per-set options
+	for (let name in PER_SET_OPTIONS) {
+		let type = PER_SET_OPTIONS[name].type;
+		let id = PER_SET_OPTIONS[name].id;
+
+		// Swap component values and enabled/disabled states
+		if (name == "conjMode") {
+			let comp1 = getElement(`${id}${set1}`);
+			let comp2 = getElement(`${id}${set2}`);
+			let index = comp1.selectedIndex;
+			comp1.selectedIndex = comp2.selectedIndex;
+			comp2.selectedIndex = index;
+		} else if (type == "boolean") {
+			let comp1 = getElement(`${id}${set1}`);
+			let comp2 = getElement(`${id}${set2}`);
+			let checked = comp1.checked;
+			comp1.checked = comp2.checked;
+			comp2.checked = checked;
+		} else if (type == "string") {
+			let comp1 = getElement(`${id}${set1}`);
+			let comp2 = getElement(`${id}${set2}`);
+			let value = comp1.value;
+			comp1.value = comp2.value;
+			comp2.value = value;
+		} else if (type == "array") {
+			let def = PER_SET_OPTIONS[name].def;
+			for (let i = 0; i < def.length; i++) {
+				let comp1 = getElement(`${id}${i}${set1}`);
+				let comp2 = getElement(`${id}${i}${set2}`);
+				let checked = comp1.checked;
+				comp1.checked = comp2.checked;
+				comp2.checked = checked;
+			}
+		}
+	}
+}
+
 // Reset options for block set to defaults
 //
 function resetSetOptions(set) {
 	// Restore default set name to tab
-	getElement(`blockSetName${set}`).innerText = `Block Set ${set}`;
+	updateBlockSetName(set, "");
 
 	// Restore per-set options
 	for (let name in PER_SET_OPTIONS) {
@@ -865,9 +950,9 @@ function resetSetOptions(set) {
 	}
 }
 
-// Disable options for block set
+// Disable (or re-enable) options for block set
 //
-function disableSetOptions(set) {
+function disableSetOptions(set, disabled) {
 	// Disable per-set options
 	for (let name in PER_SET_OPTIONS) {
 		let type = PER_SET_OPTIONS[name].type;
@@ -875,10 +960,10 @@ function disableSetOptions(set) {
 		if (type == "array") {
 			let def = PER_SET_OPTIONS[name].def;
 			for (let i = 0; i < def.length; i++) {
-				getElement(`${id}${i}${set}`).disabled = true;
+				getElement(`${id}${i}${set}`).disabled = disabled;
 			}
 		} else {
-			getElement(`${id}${set}`).disabled = true;
+			getElement(`${id}${set}`).disabled = disabled;
 		}
 	}
 
@@ -892,8 +977,10 @@ function disableSetOptions(set) {
 		"cancelLockdown"
 	];
 	for (let item of items) {
-		getElement(`${item}${set}`).disabled = true;
+		getElement(`${item}${set}`).disabled = disabled;
 	}
+
+	gSetDisabled[set] = disabled;
 }
 
 // Disable general options

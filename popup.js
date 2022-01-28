@@ -29,7 +29,7 @@ function initializePage() {
 		let theme = options["theme"];
 		let link = document.getElementById("themeLink");
 		if (link) {
-			link.href = theme ? `themes/${theme}.css` : "";
+			link.href = theme ? `/themes/${theme}.css` : "";
 		}
 	}
 }
@@ -62,7 +62,7 @@ function openStats() {
 // Open extension page (either create new tab or activate existing tab)
 //
 function openExtensionPage(url) {
-	let fullURL = browser.extension.getURL(url);
+	let fullURL = browser.runtime.getURL(url);
 
 	browser.tabs.query({ url: fullURL }, onGot);
 

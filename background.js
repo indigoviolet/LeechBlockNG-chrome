@@ -89,28 +89,28 @@ function refreshMenus() {
 	// Options
 	browser.contextMenus.create({
 		id: "options",
-		title: "Options",
+		title: browser.i18n.getMessage("optionsMenuItem"),
 		contexts: [context]
 	});
 
 	// Lockdown
 	browser.contextMenus.create({
 		id: "lockdown",
-		title: "Lockdown",
+		title: browser.i18n.getMessage("lockdownMenuItem"),
 		contexts: [context]
 	});
 
 	// Override
 	browser.contextMenus.create({
 		id: "override",
-		title: "Override",
+		title: browser.i18n.getMessage("overrideMenuItem"),
 		contexts: [context]
 	});
 
 	// Statistics
 	browser.contextMenus.create({
 		id: "stats",
-		title: "Statistics",
+		title: browser.i18n.getMessage("statisticsMenuItem"),
 		contexts: [context]
 	});
 
@@ -122,20 +122,38 @@ function refreshMenus() {
 	// Add Site
 	browser.contextMenus.create({
 		id: "addSite",
-		title: "Add Site",
+		title: browser.i18n.getMessage("addSiteMenuItem"),
 		contexts: [context]
 	});
 
 	// Add Site submenu
 	for (let set = 1; set <= gNumSets; set++) {
-		let title = `Add Site to Block Set ${set}`;
+		let title = browser.i18n.getMessage("addSiteToBlockSetMenuItem");
 		let setName = gOptions[`setName${set}`];
-		if (setName) {
-			title += ` (${setName})`;
-		}
+		title += setName ? ` ${set} (${setName})` : ` ${set}`;
 		browser.contextMenus.create({
 			id: `addSite-${set}`,
 			parentId: "addSite",
+			title: title,
+			contexts: [context]
+		});
+	}
+
+	// Add Page
+	browser.contextMenus.create({
+		id: "addPage",
+		title: browser.i18n.getMessage("addPageMenuItem"),
+		contexts: [context]
+	});
+
+	// Add Page submenu
+	for (let set = 1; set <= gNumSets; set++) {
+		let title = browser.i18n.getMessage("addPageToBlockSetMenuItem");
+		let setName = gOptions[`setName${set}`];
+		title += setName ? ` ${set} (${setName})` : ` ${set}`;
+		browser.contextMenus.create({
+			id: `addPage-${set}`,
+			parentId: "addPage",
 			title: title,
 			contexts: [context]
 		});
@@ -431,6 +449,8 @@ function checkTab(id, isBeforeNav, isRepeat) {
 	let overrideEndTime = gOptions["oret"];
 
 	gTabs[id].secsLeft = Infinity;
+	gTabs[id].secsLeftSet = 0;
+	gTabs[id].showTimer = false;
 
 	for (let set = 1; set <= gNumSets; set++) {
 		if (allowHost && allowPath && allowSet == set) {
@@ -482,8 +502,9 @@ function checkTab(id, isBeforeNav, isRepeat) {
 			let days = gOptions[`days${set}`];
 			let blockURL = gOptions[`blockURL${set}`];
 			let applyFilter = gOptions[`applyFilter${set}`];
-			let closeTab = gOptions[`closeTab${set}`];
 			let filterName = gOptions[`filterName${set}`];
+			let filterMute = gOptions[`filterMute${set}`];
+			let closeTab = gOptions[`closeTab${set}`];
 			let activeBlock = gOptions[`activeBlock${set}`];
 			let allowOverride = gOptions[`allowOverride${set}`];
 			let showTimer = gOptions[`showTimer${set}`];
@@ -547,6 +568,11 @@ function checkTab(id, isBeforeNav, isRepeat) {
 					} else if (applyFilter) {
 						gTabs[id].filterSet = set;
 
+						// Mute tab if option selected
+						if (filterMute) {
+							browser.tabs.update(id, { "muted": true });
+						}
+
 						// Send message to tab
 						let message = {
 							type: "filter",
@@ -558,7 +584,7 @@ function checkTab(id, isBeforeNav, isRepeat) {
 						gTabs[id].url = blockURL; // prevent reload loop on Chrome
 
 						// Get final URL for block page
-						blockURL = blockURL
+						blockURL = getLocalizedURL(blockURL)
 								.replace(/\$K/g, keyword ? keyword : "")
 								.replace(/\$S/g, set)
 								.replace(/\$U/g, pageURLWithHash);
@@ -592,6 +618,11 @@ function checkTab(id, isBeforeNav, isRepeat) {
 			if (set == gTabs[id].filterSet && (override || !doBlock)) {
 				gTabs[id].filterSet = undefined;
 
+				// Unmute tab if option selected
+				if (filterMute) {
+					browser.tabs.update(id, { "muted": false });
+				}
+
 				// Send message to tab
 				let message = {
 					type: "filter",
@@ -607,9 +638,10 @@ function checkTab(id, isBeforeNav, isRepeat) {
 			if (override) {
 				secsLeft = Math.max(secsLeft, overrideEndTime - now);
 			}
-			if (showTimer && secsLeft < gTabs[id].secsLeft) {
+			if (secsLeft < gTabs[id].secsLeft) {
 				gTabs[id].secsLeft = secsLeft;
 				gTabs[id].secsLeftSet = set;
+				gTabs[id].showTimer = showTimer;
 			}
 		}
 	}
@@ -623,6 +655,10 @@ function checkTab(id, isBeforeNav, isRepeat) {
 //
 function checkWarning(id) {
 	let set = gTabs[id].secsLeftSet;
+	if (set < 1 || set > gNumSets) {
+		return;
+	}
+
 	let warnSecs = gOptions["warnSecs"];
 	let canWarn = !gOptions["warnImmediate"] || gOptions[`activeBlock${set}`]
 
@@ -807,14 +843,16 @@ function updateTimer(id) {
 		return;
 	}
 
-	// Send message to tab
 	let secsLeft = gTabs[id].secsLeft;
+	let showTimer = gTabs[id].showTimer;
+
+	// Send message to tab
 	let message = {
 		type: "timer",
 		size: gOptions["timerSize"],
 		location: gOptions["timerLocation"]
 	};
-	if (!gOptions["timerVisible"] || secsLeft == undefined || secsLeft == Infinity) {
+	if (!gOptions["timerVisible"] || secsLeft == Infinity || !showTimer) {
 		message.text = null; // hide timer
 	} else {
 		message.text = formatTime(secsLeft); // show timer with time left
@@ -823,7 +861,7 @@ function updateTimer(id) {
 
 	// Set tooltip
 	if (!gIsAndroid) {
-		if (secsLeft == undefined || secsLeft == Infinity) {
+		if (secsLeft == Infinity) {
 			browser.browserAction.setTitle({ title: "LeechBlock", tabId: id });
 		} else {
 			let title = "LeechBlock [" + formatTime(secsLeft) + "]"
@@ -832,7 +870,7 @@ function updateTimer(id) {
 	}
 
 	// Set badge timer (if option selected)
-	if (!gIsAndroid && gOptions["timerBadge"] && secsLeft < 600) {
+	if (!gIsAndroid && gOptions["timerBadge"] && secsLeft < 600 && showTimer) {
 		let m = Math.floor(secsLeft / 60);
 		let s = Math.floor(secsLeft) % 60;
 		let text = m + ":" + ((s < 10) ? "0" + s : s);
@@ -910,8 +948,9 @@ function createBlockInfo(id, url) {
 		}
 	}
 
-	// Get delaying time for block set
+	// Get delaying info for block set
 	let delaySecs = gOptions[`delaySecs${blockedSet}`];
+	let delayCancel = gOptions[`delayCancel${blockedSet}`];
 
 	// Get reloading time (if specified)
 	let reloadSecs = gOptions[`reloadSecs${blockedSet}`];
@@ -924,6 +963,7 @@ function createBlockInfo(id, url) {
 		keywordMatch: keywordMatch,
 		unblockTime: unblockTime,
 		delaySecs: delaySecs,
+		delayCancel: delayCancel,
 		reloadSecs: reloadSecs
 	};
 }
@@ -1105,26 +1145,20 @@ function cancelLockdown(set) {
 
 // Apply override
 //
-function applyOverride() {
-	//log("applyOverride");
+function applyOverride(endTime) {
+	//log("applyOverride: " + endTime);
 
 	if (!gGotOptions) {
 		return;
 	}
 
-	let overrideMins = gOptions["orm"];
-	if (overrideMins) {
-		// Calculate end time
-		let clockOffset = gOptions["clockOffset"];
-		let now = Math.floor(Date.now() / 1000) + (clockOffset * 60);
-		let overrideEndTime = now + (overrideMins * 60);
-
+	if (endTime) {
 		// Update option
-		gOptions["oret"] = overrideEndTime;
+		gOptions["oret"] = endTime;
 
-		// Save updated option to local storage
+		// Save updated option to storage
 		let options = {};
-		options["oret"] = overrideEndTime;
+		options["oret"] = endTime;
 		gStorage.set(options, function () {
 			if (browser.runtime.lastError) {
 				warn("Cannot set options: " + browser.runtime.lastError.message);
@@ -1138,7 +1172,7 @@ function applyOverride() {
 // Open extension page (either create new tab or activate existing tab)
 //
 function openExtensionPage(url) {
-	let fullURL = browser.extension.getURL(url);
+	let fullURL = browser.runtime.getURL(url);
 
 	browser.tabs.query({ url: fullURL }, onGot);
 
@@ -1174,8 +1208,8 @@ function openDelayedPage(id, url, set) {
 
 // Add site to block set
 //
-function addSiteToSet(url, set) {
-	//log("addSiteToSet: " + url + " " + set);
+function addSiteToSet(url, set, includePath) {
+	//log("addSiteToSet: " + url + " " + set + " " + includePath);
 
 	if (!url) {
 		browser.tabs.query(
@@ -1201,6 +1235,9 @@ function addSiteToSet(url, set) {
 
 	// Add site if not already included
 	let site = parsedURL.host.replace(/^www\./, "");
+	if (includePath) {
+		site += parsedURL.path; // include full path to page
+	}
 	let patterns = sites.split(/\s+/);
 	if (patterns.indexOf(site) < 0) {
 		// Get sorted list of sites including new one
@@ -1219,7 +1256,7 @@ function addSiteToSet(url, set) {
 
 		createRegExps();
 
-		// Save updated options to local storage
+		// Save updated options to storage
 		let options = {};
 		options[`sites${set}`] = sites;
 		options[`blockRE${set}`] = regexps.block;
@@ -1247,7 +1284,9 @@ function handleMenuClick(info, tab) {
 	} else if (id == "stats") {
 		openExtensionPage("stats.html");
 	} else if (id.startsWith("addSite-")) {
-		addSiteToSet(info.pageUrl, id.substr(8));
+		addSiteToSet(info.pageUrl, id.substr(8), false);
+	} else if (id.startsWith("addPage-")) {
+		addSiteToSet(info.pageUrl, id.substr(8), true);
 	}
 }
 
@@ -1294,7 +1333,7 @@ function handleMessage(message, sender, sendResponse) {
 
 		case "override":
 			// Override requested
-			applyOverride();
+			applyOverride(message.endTime);
 			break;
 
 		case "referrer":
@@ -1430,6 +1469,9 @@ function onInterval() {
 browser.runtime.getPlatformInfo(
 	function (info) { gIsAndroid = (info.os == "android"); }
 );
+
+let localePath = browser.i18n.getMessage("localePath");
+browser.browserAction.setPopup({ popup: localePath + "popup.html" });
 
 if (browser.contextMenus) {
 	browser.contextMenus.onClicked.addListener(handleMenuClick);

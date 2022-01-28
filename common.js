@@ -11,6 +11,10 @@ const OVERRIDE_ICON = { 16: "icons/leechblock16o.png", 32: "icons/leechblock32o.
 
 const PARSE_URL = /^((([\w-]+):\/*(\w+(?::\w+)?@)?([\w-\.]+)(?::(\d*))?)([^\?#]*))(\?[^#]*)?(#.*)?$/;
 
+const ABSOLUTE_URL = /^[\w-]+:/;
+
+const INTERNAL_BLOCK_URL = /^(\w+\/)?(blocked|delayed)\.html\?\$S&\$U$/;
+
 const LEECHBLOCK_URL = "https://www.proginosko.com/leechblock/";
 
 const U_WORD_CHAR = "[\\p{L}\\p{N}]";
@@ -32,13 +36,15 @@ const PER_SET_OPTIONS = {
 	days: { type: "array", def: [false, true, true, true, true, true, false], id: "day" },
 	blockURL: { type: "string", def: DEFAULT_BLOCK_URL, id: "blockURL" },
 	applyFilter: { type: "boolean", def: false, id: "applyFilter" },
-	closeTab: { type: "boolean", def: false, id: "closeTab" },
 	filterName: { type: "string", def: "grayscale", id: "filterName" },
+	filterMute: { type: "boolean", def: false, id: "filterMute" },
+	closeTab: { type: "boolean", def: false, id: "closeTab" },
 	activeBlock: { type: "boolean", def: false, id: "activeBlock" },
 	countFocus: { type: "boolean", def: true, id: "countFocus" },
 	showKeyword: { type: "boolean", def: true, id: "showKeyword" },
 	delayFirst: { type: "boolean", def: true, id: "delayFirst" },
 	delaySecs: { type: "string", def: "60", id: "delaySecs" },
+	delayCancel: { type: "boolean", def: true, id: "delayCancel" },
 	reloadSecs: { type: "string", def: "", id: "reloadSecs" },
 	allowOverride: { type: "boolean", def: false, id: "allowOverride" },
 	prevOpts: { type: "boolean", def: false, id: "prevOpts" },
@@ -294,6 +300,12 @@ function checkPosNegIntFormat(value) {
 	return (value == "") || /^-?[1-9][0-9]*$/.test(value);
 }
 
+// Check blocking page URL format
+//
+function checkBlockURLFormat(url) {
+	return INTERNAL_BLOCK_URL.test(url) || getParsedURL(url).page;
+}
+
 // Convert times to minute periods
 //
 function getMinPeriods(times) {
@@ -466,6 +478,14 @@ function createAccessCode(len) {
 function setTheme(theme) {
 	let link = document.getElementById("themeLink");
 	if (link) {
-		link.href = theme ? `themes/${theme}.css` : "";
+		link.href = theme ? `/themes/${theme}.css` : "";
 	}
+}
+
+// Get localized version of extension page
+//
+function getLocalizedURL(url) {
+	return (ABSOLUTE_URL.test(url))
+			? url // no localization for absolute URL
+			: browser.i18n.getMessage("localePath") + url;
 }

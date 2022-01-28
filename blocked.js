@@ -13,7 +13,7 @@ function processBlockInfo(info) {
 		// Set theme
 		let link = document.getElementById("themeLink");
 		if (link) {
-			link.href = info.theme ? `themes/${info.theme}.css` : "";
+			link.href = info.theme ? `/themes/${info.theme}.css` : "";
 		}
 	}
 
@@ -64,7 +64,8 @@ function processBlockInfo(info) {
 		let countdown = {
 			blockedURL: info.blockedURL,
 			blockedSet: info.blockedSet,
-			delaySecs: info.delaySecs
+			delaySecs: info.delaySecs,
+			delayCancel: info.delayCancel
 		};
 		countdown.interval = window.setInterval(onCountdownTimer, 1000, countdown);
 	}
@@ -79,7 +80,7 @@ function processBlockInfo(info) {
 //
 function onCountdownTimer(countdown) {
 	// Cancel countdown if document not focused
-	if (!document.hasFocus()) {
+	if (countdown.delayCancel && !document.hasFocus()) {
 		// Clear countdown timer
 		window.clearInterval(countdown.interval);
 

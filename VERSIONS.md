@@ -1,3 +1,25 @@
+### Version 1.3 (16 Jan 2022)
+* Added "Move Set" buttons for easy reordering of block sets.
+* Added "Add Page" menu (like "Add Site" but includes full path).
+* Added option to specify override duration at time of activation.
+
+### Version 1.2 (28 Dec 2021)
+* Added option to choose whether delay countdown is canceled when delaying page loses focus.
+* Minor code tweaks.
+
+### Version 1.1.1 (30 Oct 2021)
+* Minor code tweaks.
+
+### Version 1.1 (19 Sep 2021)
+* Added partial Spanish and Hebrew localization.
+* Fixed issue with timer size.
+
+### Version 1.0.13 (04 Jul 2021)
+* Added option to mute tab with filter.
+* Added more filter options.
+* Improved image resolution for random access code.
+* Fixed issues with countdown timer and warning message.
+
 ### Version 1.0.12 (01 Jun 2021)
 * Minor usability tweaks.
 

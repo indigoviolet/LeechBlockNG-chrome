@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<html lang="us">
+<html lang="en">
 
 	<head>
 		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 		<title>LeechBlock Options</title>
-		<link href="jquery-ui/jquery-ui.min.css" rel="stylesheet">
-		<link href="options.css" rel="stylesheet">
-		<link href="icons/leechblock16.ico" rel="icon" type="image/x-icon">
-		<link href="icons/leechblock16.ico" rel="shortcut icon" type="image/x-icon">
+		<link href="/jquery-ui/jquery-ui.min.css" rel="stylesheet">
+		<link href="/options.css" rel="stylesheet">
+		<link href="/icons/leechblock16.ico" rel="icon" type="image/x-icon">
+		<link href="/icons/leechblock16.ico" rel="shortcut icon" type="image/x-icon">
 		<link id="themeLink" rel="stylesheet">
 	</head>
 
@@ -26,6 +27,10 @@
 						<li id="tabAbout"><a href="#paneAbout">About</a></li>
 					</ul>
 					<div id="blockSet1">
+						<p>
+							<button id="moveSetL1" type="button">&#x2BC7; Move Set</button>
+							<button id="moveSetR1" type="button" style="float: right;">Move Set &#x2BC8;</button>
+						</p>
 						<fieldset>
 							<legend>What to Block</legend>
 							<p>
@@ -143,10 +148,18 @@
 									<option>blur (1px)</option>
 									<option>blur (2px)</option>
 									<option>blur (4px)</option>
+									<option>blur (8px)</option>
+									<option>blur (16px)</option>
+									<option>blur (32px)</option>
+									<option>fade (80%)</option>
+									<option>fade (90%)</option>
 									<option>grayscale</option>
 									<option>invert</option>
 									<option>sepia</option>
 								</select>
+								&nbsp;&nbsp;&nbsp;&nbsp;
+								<input id="filterMute1" type="checkbox">
+								<label for="filterMute1">Mute tab with filter</label>
 							</p>
 							<p>
 								<input id="closeTab1" type="checkbox">
@@ -172,14 +185,15 @@
 								Delay access to sites by <input id="delaySecs1" type="text" size="2"> seconds when delaying page is used
 							</p>
 							<p>
+								<input id="delayCancel1" type="checkbox">
+								<label for="delayCancel1">Cancel delay countdown if delaying page loses focus</label>
+							</p>
+							<p>
 								Attempt to reload blocked page every <input id="reloadSecs1" type="text" size="2"> seconds (only applies to default page)
 							</p>
 							<p>
 								<input id="allowOverride1" type="checkbox">
 								<label for="allowOverride1">Allow temporary override for these sites</label>
-							</p>
-							<p>
-								<strong>Note:</strong> You should also specify an override period in the General options.
 							</p>
 						</fieldset>
 						<p>
@@ -338,7 +352,7 @@
 						<fieldset>
 							<legend>Temporary Override</legend>
 							<p>
-								Allow blocking to be suspended for a period of <input id="overrideMins" type="text" size="2" title="Leave blank for no override"> minutes
+								Allow blocking to be suspended for <input id="overrideMins" type="text" size="2" title="Leave blank to specify a duration when the override is activated"> minute(s)
 							</p>
 							<p>
 								<label>Select the requirement for activating the override:</label><br>
@@ -540,10 +554,10 @@
 			</div>
 		</div>
 
-		<script src="jquery-ui/external/jquery/jquery.js"></script>
-		<script src="jquery-ui/jquery-ui.min.js"></script>
-		<script src="common.js"></script>
-		<script src="options.js"></script>
+		<script src="/jquery-ui/external/jquery/jquery.js"></script>
+		<script src="/jquery-ui/jquery-ui.min.js"></script>
+		<script src="/common.js"></script>
+		<script src="/options.js"></script>
 
 	</body>
 
