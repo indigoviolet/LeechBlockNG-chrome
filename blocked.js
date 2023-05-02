@@ -9,12 +9,10 @@ const browser = chrome;
 function processBlockInfo(info) {
 	if (!info) return;
 
-	if (info.theme) {
-		// Set theme
-		let link = document.getElementById("themeLink");
-		if (link) {
-			link.href = info.theme ? `/themes/${info.theme}.css` : "";
-		}
+	// Set theme
+	let link = document.getElementById("themeLink");
+	if (link) {
+		link.href = "/themes/" + (info.theme ? `${info.theme}.css` : "default.css");
 	}
 
 	let blockedURL = document.getElementById("lbBlockedURL");
@@ -105,7 +103,7 @@ function onCountdownTimer(countdown) {
 		// Clear countdown timer
 		window.clearInterval(countdown.interval);
 
-		// Request extension allow blocked page and redirect
+		// Notify extension that delay countdown has completed
 		let message = {
 			type: "delayed",
 			blockedURL: countdown.blockedURL,

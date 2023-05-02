@@ -1,3 +1,30 @@
+### Version 1.5.4.1 (08 Mar 2023)
+* Fixed default theme for blocking/delaying pages.
+
+### Version 1.5.4 (26 Feb 2023)
+* Added button to discard remaining time allowance (including any rollover time).
+* Default theme now honors browser dark/light mode.
+* UI tweaks.
+
+### Version 1.5.3 (05 Feb 2023)
+* Added option to include passwords in exported file.
+* Added option to enable/disable auto-loading of blocked page after delay countdown.
+* UI tweaks.
+
+### Version 1.5.2 (26 Nov 2022)
+* Added option to show/hide access password.
+* Added option to select clock time format (12/24-hour).
+* Added button to reset rollover time.
+* Bug fixes, UI tweaks, and under-the-hood improvements.
+
+### Version 1.5.1 (12 Aug 2022)
+* Fixed issue with pinned/restored tabs.
+
+### Version 1.5 (07 Aug 2022)
+* Added option for predefined override access code (thanks to Bailey Kong).
+* Fixed issue with colons and hyphens in keywords.
+* Under-the-hood improvements.
+
 ### Version 1.4.2 (01 May 2022)
 * Added button to cancel override.
 * Fixed issue with hyphens in URLs.

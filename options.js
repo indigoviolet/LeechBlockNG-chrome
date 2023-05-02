@@ -22,6 +22,7 @@ var gSetDisabled;
 var gSetOrdering, gSetReordered;
 var gTabIndex = 0;
 var gNewOpen = true;
+var gClockTimeOpts;
 
 // Initialize form (with specified number of block sets)
 //
@@ -105,6 +106,7 @@ function initForm(numSets) {
 		});
 		$(`#advOpts${set}`).css("display", "none");
 	}
+	$("#accessPasswordShow").change(accessPasswordShow);
 	$("#overridePasswordShow").change(overridePasswordShow);
 	$("#theme").change(function (e) { setTheme($("#theme").val()); });
 	$("#clockOffset").click(showClockOffsetTime);
@@ -123,6 +125,12 @@ function initForm(numSets) {
 	// Disable first move-left and last move-right buttons
 	getElement("moveSetL1").disabled = true;
 	getElement("moveSetR" + gNumSets).disabled = true;
+
+	if (gIsAndroid) {
+		// Hide sync options (sync storage not supported on Android yet)
+		getElement("syncOpts1").style.display = "none";
+		getElement("syncOpts2").style.display = "none";
+	}
 
 	// Set active tab
 	if (gTabIndex < 0) {
@@ -420,6 +428,13 @@ function retrieveOptions() {
 
 		setTheme(options["theme"]);
 
+		// Get clock time format
+		gClockTimeOpts = {};
+		let clockTimeFormat = options["clockTimeFormat"];
+		if (clockTimeFormat > 0) {
+			gClockTimeOpts.hour12 = (clockTimeFormat == 1);
+		}
+
 		// Get current time in seconds
 		let clockOffset = options["clockOffset"];
 		let now = Math.floor(Date.now() / 1000) + (clockOffset * 60);
@@ -553,12 +568,6 @@ function retrieveOptions() {
 			}
 		}
 
-		if (gIsAndroid) {
-			// Hide sync options (sync storage not supported on Android yet)
-			getElement("syncOpts1").style.display = "none";
-			getElement("syncOpts2").style.display = "none";
-		}
-
 		confirmAccess(options);
 	}
 }
@@ -647,6 +656,14 @@ function displayAccessCode(code, asImage) {
 	}
 }
 
+// Show/hide access password
+//
+function accessPasswordShow() {
+	let input = getElement("accessPassword");
+	let checkbox = getElement("accessPasswordShow");
+	input.type = checkbox.checked ? "text" : "password";
+}
+
 // Show/hide override password
 //
 function overridePasswordShow() {
@@ -663,14 +680,14 @@ function showClockOffsetTime() {
 		$("#clockOffsetTime").css("display", "none");
 	} else {
 		let timedate = new Date(Date.now() + (clockOffset * 60000));
-		$("#clockOffsetTime").html(timedate.toLocaleString());
+		$("#clockOffsetTime").html(timedate.toLocaleString(undefined, gClockTimeOpts));
 		$("#clockOffsetTime").css("display", "inline");
 	}
 }
 
 // Compile options for export
 //
-function compileExportOptions() {
+function compileExportOptions(passwords) {
 	let options = {};
 
 	// Per-set options
@@ -704,6 +721,7 @@ function compileExportOptions() {
 
 	// General options
 	for (let name in GENERAL_OPTIONS) {
+		if (!passwords && (name == "password" || name == "orp")) continue;
 		let type = GENERAL_OPTIONS[name].type;
 		let id = GENERAL_OPTIONS[name].id;
 		if (id) {
@@ -749,6 +767,12 @@ function applyImportOptions(options) {
 			}
 		}
 
+		// Apply Firefox-specific options
+		let val = options[`prevAddons${set}`];
+		if (val != undefined) {
+			getElement(`prevExts${set}`).checked = val;
+		}
+
 		// Apply custom set name to tab (if specified)
 		updateBlockSetName(set, options[`setName${set}`]);
 	}
@@ -770,7 +794,9 @@ function applyImportOptions(options) {
 // Export options to file
 //
 function exportOptions() {
-	let options = compileExportOptions();
+	let exportPasswords = getElement("exportPasswords").checked;
+
+	let options = compileExportOptions(exportPasswords);
 
 	// Convert options to text lines
 	let lines = [];
@@ -785,7 +811,7 @@ function exportOptions() {
 
 	// Create blob and download it
 	let blob = new Blob(lines, { type: "text/plain", endings: "native" });
-	var url = URL.createObjectURL(blob);
+	let url = URL.createObjectURL(blob);
 	let downloadOptions = { url: url, filename: DEFAULT_OPTIONS_FILE };
 	if (!gIsAndroid) {
 		downloadOptions.saveAs = true;
@@ -861,7 +887,7 @@ function importOptions() {
 // Export options to sync storage
 //
 function exportOptionsSync(event) {
-	let options = compileExportOptions();
+	let options = compileExportOptions(true);
 
 	browser.storage.sync.set(options, onExported);
 

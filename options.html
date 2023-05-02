@@ -9,8 +9,8 @@
 		<title>LeechBlock Options</title>
 		<link href="/jquery-ui/jquery-ui.min.css" rel="stylesheet">
 		<link href="/options.css" rel="stylesheet">
-		<link href="/icons/leechblock16.ico" rel="icon" type="image/x-icon">
-		<link href="/icons/leechblock16.ico" rel="shortcut icon" type="image/x-icon">
+		<link href="/icons/leechblock32.ico" rel="icon" type="image/x-icon">
+		<link href="/icons/leechblock32.ico" rel="shortcut icon" type="image/x-icon">
 		<link id="themeLink" rel="stylesheet">
 	</head>
 
@@ -28,8 +28,8 @@
 					</ul>
 					<div id="blockSet1">
 						<p>
-							<button id="moveSetL1" type="button">&#x2BC7; Move Set</button>
-							<button id="moveSetR1" type="button" style="float: right;">Move Set &#x2BC8;</button>
+							<button id="moveSetL1" type="button">&larr; Move Set</button>
+							<button id="moveSetR1" type="button" style="float: right;">Move Set &rarr;</button>
 						</p>
 						<fieldset>
 							<legend>What to Block</legend>
@@ -188,6 +188,10 @@
 								Delay access to sites by <input id="delaySecs1" type="text" size="2"> seconds when delaying page is used
 							</p>
 							<p>
+								<input id="delayAutoLoad1" type="checkbox">
+								<label for="delayAutoLoad1">Automatically load blocked page when delay countdown reaches zero</label>
+							</p>
+							<p>
 								<input id="delayCancel1" type="checkbox">
 								<label for="delayCancel1">Cancel delay countdown if delaying page loses focus</label>
 							</p>
@@ -305,7 +309,10 @@
 							</p>
 							<p>
 								<label>Password:</label>
-								<input id="accessPassword" type="text" size="60">
+								<input id="accessPassword" type="password" size="40">
+								&nbsp;&nbsp;&nbsp;&nbsp;
+								<input id="accessPasswordShow" type="checkbox">
+								<label for="accessPasswordShow">Show password</label>
 							</p>
 							<p>
 								<input id="hidePassword" type="checkbox">
@@ -370,9 +377,14 @@
 										<option value="2">Require the user to enter a random 32-character access code</option>
 										<option value="3">Require the user to enter a random 64-character access code</option>
 										<option value="4">Require the user to enter a random 128-character access code</option>
+										<option value="8">Require the user to enter a predefined access code (see below)</option>
 										<option value="9">Require the user to enter a separate override password (see below)</option>
 									</select>
 								</div>
+							</p>
+							<p>
+								<label>Predefined access code:</label>
+								<input id="overrideCode" type="text" size="60">
 							</p>
 							<p>
 								<label>Override password:</label>
@@ -395,6 +407,7 @@
 								<label>Theme:</label>
 								<select id="theme">
 									<option value="">Default</option>
+									<option value="light">Light</option>
 									<option value="dark">Dark</option>
 									<option value="spruce">Spruce</option>
 								</select>
@@ -406,6 +419,15 @@
 							<p>
 								<input id="matchSubdomains" type="checkbox">
 								<label for="matchSubdomains">Block all subdomains (not just www)</label>
+							</p>
+							<p>
+								Display clock times in
+								<select id="clockTimeFormat">
+									<option value="0">default</option>
+									<option value="1">12-hour</option>
+									<option value="2">24-hour</option>
+								</select>
+								format
 							</p>
 							<p>
 								Save time data every <input id="saveSecs" type="text" size="2" title="Default: 10"> seconds
@@ -446,6 +468,10 @@
 								<button id="importOptions" type="button">Import Options from File</button>
 								<input type="file" id="importFile">
 							</p>
+							<p>
+								<input id="exportPasswords" type="checkbox">
+								<label for="exportPasswords">Include passwords in exported options</label>
+							</p>
 							<span id="syncOpts2">
 							<hr>
 							<p>
@@ -481,6 +507,8 @@
 						<a href="https://www.proginosko.com/leechblock/support/" target="_blank">https://www.proginosko.com/leechblock/support/</a></p>
 						<p><strong>Version History:</strong>
 						<a href="https://www.proginosko.com/leechblock/version-history/" target="_blank">https://www.proginosko.com/leechblock/version-history/</a></p>
+						<p><strong>Donations:</strong>
+						<a href="https://www.paypal.me/JamesNAnderson" target="_blank">https://www.paypal.me/JamesNAnderson</a></p>
 						<p><button id="openDiagnostics" type="button">Open Diagnostics Page</button><p>
 					</div>
 				</div>
